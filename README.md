@@ -73,11 +73,11 @@ svn del asdf.txt
 ```
 - copia um arquivo já rastreado para outro arquivo/diretório
 ```sh
-svn cp <orig> <dest> 
+svn cp <orig> <dest>
 ```
 - renomeia ou move um arquivo/diretório
 ```sh
-svn mv <orig> <dest> 
+svn mv <orig> <dest>
 ```
 
 - atualiza a cópia de trabalho com uma revisão.
@@ -252,4 +252,67 @@ svn commit -m  'resolve #1 | arquivos filtrados e propriedades configuradas' #co
 # Committing transaction...
 # Committed revision 2.
 ```
+## 12. Revertendo alterações pelo subversion
+### antes de consolidar   
+- reverte os arquivos requirements.txt LICENSE para o estado da consolidação
+```sh
+svn revert requirements.txt LICENSE
+```
+- reverte todos os arquivos modificados
+```sh
+svn revert -R .
+```
+- ação de cp e mv do sistema operacional não podem ser revertidas, será necessário desfazer as alterações pelo sistema operacional
+- somente as exclusões podem ser consertas pelo comando `svn rm`
+### Depois de compartilhado
+#### Revertendo modificação de arquivo após a consolidação
+- mostra os logs com alterações no arquivo LICENSE
+```sh
+svn log LICENSE
+```
+Saída do comando:
+```sh
+------------------------------------------------------------------------
+r4 | adriano | 2019-05-27 22:29:13 -0300 (Mon, 27 May 2019) | 1 line
 
+fase #3 | remoção de requirements.txt e mudança na licença
+------------------------------------------------------------------------
+r2 | adriano | 2019-05-21 20:24:26 -0300 (Tue, 21 May 2019) | 1 line
+
+resolve #1 | configuração que servirá como base para os próximos passos
+------------------------------------------------------------------------
+```
+- mostra o conteúdo do arquivo na revisão 3
+```sh
+svn cat -r 3 LICENSE
+```
+- outra forma de exibir o conteúdo do arquivo, mas através do caminho do respositório
+```sh
+svn cat file:///home/adriano/Downloads/teste/svn-repositorios/revertendo-alteracoes/trunk/LICENSE@3
+```
+- mostra o conteúdo do arquivo com um caminho relativo
+```sh
+svn cat ^/trunk/LICENSE@3
+```
+- restaura um arquivo pelo caminho relativo
+```sh
+svn cat ^/trunk/LICENSE@3 > LICENSE
+```
+#### Revertendo exclusão de arquivo após a consolidação
+- `svn log nomedoarquivo.txt` não funciona para arquivos deletados
+- `svn log -v` exibe o log so svn de forma verbosa e `grep -B 5 requirements.txt` filtra a saída do primeiro comando mostrando 5 linhas antes de encontrar a palavra `requirements.txt`
+```sh
+svn log -v | grep -B 5 requirements.txt
+```
+- melhorando a consulta podemos retornar somente a saída de arquivos deletados:
+```sh
+svn log -v | grep -B 5 'D.*requirements.txt'
+```
+Alterantiva 1: não mantém o histórico do arquivo deletado
+```sh
+svn cat ^/trunk/requirements.txt@3 > requirements.txt
+```
+Alternativa 2: mantém o histórico do arquivo
+```sh
+svn cp ^/trunk/requirements.txt@3 .
+```
